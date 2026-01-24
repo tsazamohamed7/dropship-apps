@@ -3,7 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => ({
-  base: mode === "production" ? "/dropship-apps/" : "/",
+  base: "/dropship-apps/",
 
   plugins: [
     vue(),
