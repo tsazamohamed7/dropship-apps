@@ -46,7 +46,6 @@ export const useOrderStore = defineStore("order", {
 
       await OrderService.create(data);
 
-      toast.success("Order created");
       await this.fetchOrders(); // refresh list
     },
 

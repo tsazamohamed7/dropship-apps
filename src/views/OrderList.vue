@@ -136,7 +136,6 @@
               </span>
               <div class="flex flex-col">
                 <span class="font-bold text-slate-800">{{ item.product_name }}</span>
-                <span class="text-[10px] text-slate-400">SKU: {{ item.sku || 'N/A' }}</span>
               </div>
             </div>
             <div class="font-black text-slate-700">
