@@ -20,7 +20,7 @@ export default defineConfig({
         name: "Dropship Manager",
         short_name: "Dropship",
         description: "Order & inventory management app",
-        theme_color: "#dfe1c1",
+        theme_color: "#ffffff",
         background_color: "#dfe1c1",
         display: "standalone",
         start_url: "index.html",
