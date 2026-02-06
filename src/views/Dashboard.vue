@@ -5,9 +5,9 @@
     <h2 class="text-lg font-semibold text-slate-800">Dashboard</h2>
 
     <!-- Loading -->
-    <div v-if="dashboard.loading" class="text-center py-10 text-slate-400">
-      <div class="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent rounded-full mb-2"></div>
-      <p>Loading dashboard...</p>
+	  <div v-if="dashboard.loading" class="text-center py-20 text-slate-400">
+      <div class="animate-spin inline-block w-8 h-8 border-4 border-slate-300 border-t-slate-800 rounded-full mb-4"></div>
+      <p class="font-bold text-sm">Loading dashboard...</p>
     </div>
 
     <!-- Stats -->
