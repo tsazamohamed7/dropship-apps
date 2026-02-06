@@ -11,9 +11,10 @@
       </button>
     </div>
 
-    <div v-if="productStore.loading" class="space-y-3">
-      <div v-for="i in 5" :key="i" class="h-28 bg-slate-200 rounded-2xl animate-pulse"></div>
-    </div>
+	  <div v-if="productStore.loading" class="text-center py-20 text-slate-400">
+	    <div class="animate-spin inline-block w-8 h-8 border-4 border-slate-300 border-t-slate-800 rounded-full mb-4"></div>
+	    <p class="font-bold text-sm">Synchronizing Products...</p>
+	  </div>
 
     <div
       v-for="p in productStore.items"
