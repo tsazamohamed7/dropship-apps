@@ -21,7 +21,7 @@ const items = [
   { to: "/dashboard", label: "Home", icon: "fa-th-large" }, // Dashboard/Grid icon
   { to: "/products", label: "Products", icon: "fa-archive" }, // Box icon
   { to: "/orders", label: "Orders", icon: "fa-list-alt" },    // Receipt/List icon
-  { to: "/pre-order", label: "Pre-Order", icon: "fa-calendar-check-o" } // New Pre-Order item
+  { to: "/preorders", label: "Pre-Order", icon: "fa-calendar-check-o" } // New Pre-Order item
 ];
 
 </script>
