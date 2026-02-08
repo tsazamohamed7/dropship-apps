@@ -23,6 +23,11 @@ export default createRouter({
           component: () => import("../views/OrderList.vue"),
           meta: { title: "Orders" }
         },
+        {
+          path: "preorders",
+          component: () => import("../views/PreOrderList.vue"),
+          meta: { title: "Pre-Orders" }
+        },
         { path: "", redirect: "/dashboard" }
       ]
     }
