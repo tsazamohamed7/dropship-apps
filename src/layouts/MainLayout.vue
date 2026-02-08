@@ -1,6 +1,9 @@
 <template>
-  <div class="h-screen flex flex-col">
+  <div class="h-screen flex flex-col bg-slate-50">
     <header class="h-14 flex items-center justify-between px-4 bg-white/80 backdrop-blur border-b sticky top-0 z-50">
+      
+      <div class="w-10"></div>
+
       <router-link to="/">
         <img src="../assets/vue.svg" alt="Logo" class="h-8 w-auto" />
       </router-link>
@@ -9,7 +12,7 @@
         @click="cart.toggle()" 
         class="relative w-10 h-10 flex items-center justify-center text-slate-700 active:scale-90 transition-transform"
       >
-        <i class="fa fa-shopping-cart text-2xl"></i>
+        <i class="fa fa-shopping-cart text-xl"></i>
         <span
           v-if="cart.totalQty"
           class="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-black min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white shadow-sm"
