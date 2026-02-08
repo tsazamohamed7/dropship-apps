@@ -1,6 +1,6 @@
 <template>
   <div class="h-screen flex flex-col">
-    <header class="h-14 flex items-center justify-center bg-white/80 backdrop-blur border-b">
+    <header class="h-14 flex items-center justify-between px-4 bg-white/80 backdrop-blur border-b sticky top-0 z-50">
       <router-link to="/">
         <img src="../assets/vue.svg" alt="Logo" class="h-8 w-auto" />
       </router-link>
