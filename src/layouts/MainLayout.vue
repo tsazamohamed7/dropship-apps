@@ -4,7 +4,7 @@
       
       <div class="w-10"></div>
 
-      <router-link to="/">
+      <router-link to="/" class="flex items-center justify-center">
         <img src="../assets/vue.svg" alt="Logo" class="h-8 w-auto" />
       </router-link>
 
