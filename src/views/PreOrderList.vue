@@ -1,89 +1,224 @@
 <template>
-  <div class="p-4 space-y-4 bg-slate-50 min-h-screen font-sans">
-    <div class="flex flex-col gap-1">
+  <div class="p-4 pb-24 space-y-3 bg-slate-50 min-h-screen font-sans">
+    <div class="flex justify-between items-center mb-2">
       <h2 class="text-xl font-black text-slate-800 tracking-tight">Pre-Orders</h2>
-      <p class="text-xs text-slate-500 font-medium">Manage scheduled deliveries</p>
+      <span class="text-[10px] bg-slate-200 px-2 py-1 rounded-lg font-bold text-slate-500 uppercase">
+        {{ preOrderStore.items.length }} Items
+      </span>
     </div>
 
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-      <div class="flex flex-col">
-        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Date</span>
-        <input 
-          type="date" 
-          v-model="selectedDate"
-          class="text-sm font-bold text-slate-700 outline-none bg-transparent"
-        />
-      </div>
-      <div class="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
-        <i class="fa fa-calendar text-xl"></i>
-      </div>
+    <div v-if="preOrderStore.loading" class="text-center py-20 text-slate-400">
+      <div class="animate-spin inline-block w-8 h-8 border-4 border-slate-300 border-t-slate-800 rounded-full mb-4"></div>
+      <p class="font-bold text-sm">Synchronizing Pre-Orders...</p>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <div class="bg-blue-500 p-3 rounded-2xl text-white">
-        <div class="text-[10px] font-bold opacity-80 uppercase">Total Items</div>
-        <div class="text-xl font-black">{{ totalItemsForDate }}</div>
-      </div>
-      <div class="bg-slate-800 p-3 rounded-2xl text-white">
-        <div class="text-[10px] font-bold opacity-80 uppercase">Orders</div>
-        <div class="text-xl font-black">{{ filteredPreOrders.length }}</div>
-      </div>
-    </div>
+    <div
+      v-for="p in preOrderStore.items"
+      :key="p.id"
+      class="flex flex-col mb-4"
+    >
+      <!-- CARD -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden h-28 flex z-20">
+        <div
+          class="absolute inset-0 z-20 bg-white p-4 flex justify-between items-center transition-transform duration-300 ease-out"
+          :style="{ transform: p._showActions ? `translateX(-${calculateOffset(p)}px)` : 'translateX(0)' }"
+          @click="handleCardClick(p)"
+        >
+          <div class="space-y-1">
+            <div class="font-black text-slate-800 leading-tight truncate w-48 text-base">
+              {{ p.product_name }}
+            </div>
+            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+              {{ p.sku }}
+            </div>
 
-    <div v-if="filteredPreOrders.length > 0" class="space-y-3">
-      <div 
-        v-for="o in filteredPreOrders" 
-        :key="o.order_id"
-        class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm active:scale-[0.98] transition-transform"
-      >
-        <div class="flex justify-between items-start mb-2">
-          <div>
-            <div class="font-black text-slate-800 text-base leading-tight">{{ o.customer_name }}</div>
-            <div class="text-[10px] font-bold text-blue-500 uppercase mt-0.5">
-              Ref: {{ o.order_id.split('-')[0] }}
+            <div class="flex gap-1.5 mt-2">
+              <span class="text-[8px] uppercase tracking-tighter font-black px-2 py-1 rounded-lg" :class="statusClass(p.status)">
+                {{ p.status }}
+              </span>
+              <span class="text-[8px] uppercase tracking-tighter font-black px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
+                Qty {{ totalQty(p) }}
+              </span>
             </div>
           </div>
-          <div class="text-right">
-            <div class="font-black text-slate-800">RM {{ Number(o.total_amount).toFixed(2) }}</div>
-            <span class="text-[9px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md font-black">PRE-ORDER</span>
-          </div>
+
+          <button
+            v-if="hasActions(p)"
+            @click.stop="toggleActions(p)"
+            class="w-12 h-12 flex items-center justify-center text-slate-300 active:text-blue-500 transition-colors"
+          >
+            <i class="fa text-2xl transition-transform duration-300" :class="p._showActions ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+          </button>
         </div>
 
-        <div class="border-t border-slate-50 pt-2 mt-2 space-y-1">
-          <div v-for="item in o.items" :key="item.product_id" class="flex justify-between text-xs text-slate-600">
-            <span>{{ item.qty }}x {{ item.product_name }}</span>
-            <span class="font-bold">RM {{ (item.price * item.qty).toFixed(2) }}</span>
-          </div>
+        <!-- ACTIONS -->
+        <div class="absolute right-0 top-0 bottom-0 z-10 flex h-full bg-slate-50">
+          <button
+            v-if="p.status === 'OPEN'"
+            class="w-16 bg-sky-500 text-white flex flex-col items-center justify-center gap-1"
+            @click.stop="edit(p)"
+          >
+            <i class="fa fa-pencil text-xl"></i>
+            <span class="text-[9px] font-black uppercase">Edit</span>
+          </button>
+
+          <button
+            v-if="p.status === 'OPEN'"
+            class="w-16 bg-amber-400 text-amber-900 flex flex-col items-center justify-center gap-1"
+            @click.stop="addCustomer(p)"
+          >
+            <i class="fa fa-user-plus text-xl"></i>
+            <span class="text-[9px] font-black uppercase">Add</span>
+          </button>
+
+          <button
+            v-if="p.status === 'OPEN'"
+            class="w-16 bg-slate-800 text-white flex flex-col items-center justify-center gap-1"
+            @click.stop="finalize(p)"
+          >
+            <i class="fa fa-lock text-xl"></i>
+            <span class="text-[9px] font-black uppercase">Finalize</span>
+          </button>
+
+          <button
+            v-if="p.status === 'FINALIZED'"
+            class="w-16 bg-emerald-500 text-white flex flex-col items-center justify-center gap-1"
+            @click.stop="received(p)"
+          >
+            <i class="fa fa-check-circle text-xl"></i>
+            <span class="text-[9px] font-black uppercase">Received</span>
+          </button>
         </div>
       </div>
-    </div>
 
-    <div v-else class="flex flex-col items-center justify-center py-12 text-slate-400">
-      <i class="fa fa-calendar-o text-5xl mb-3 opacity-20"></i>
-      <p class="font-bold text-sm">No pre-orders for this date</p>
-      <p class="text-[10px]">Select another date to view schedule</p>
+      <!-- EXPAND -->
+      <div
+        v-if="p._expanded"
+        class="bg-white/60 border-x border-b border-slate-100 rounded-b-2xl -mt-4 pt-6 p-4 space-y-3 z-10 shadow-inner"
+      >
+        <div v-if="p._loadingItems" class="flex items-center justify-center py-4 gap-2">
+          <div class="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Fetching Details</span>
+        </div>
+
+        <div v-else-if="p.customers && p.customers.length" class="space-y-2">
+          <div
+            v-for="c in p.customers"
+            :key="c.id"
+            class="flex justify-between items-center text-xs bg-white p-2 rounded-xl border border-slate-50 shadow-sm"
+          >
+            <div class="flex gap-3 items-center">
+              <span class="h-6 w-6 flex items-center justify-center bg-slate-100 rounded-lg font-black text-slate-700">
+                {{ c.qty }}
+              </span>
+              <div class="flex flex-col">
+                <span class="font-bold text-slate-800">{{ c.name }}</span>
+                <span class="text-[10px] text-slate-400">{{ c.phone }}</span>
+              </div>
+            </div>
+
+            <button
+              v-if="p.status === 'OPEN'"
+              class="text-rose-500 text-xs font-bold"
+              @click="removeCustomer(p, c)"
+            >
+              Delete
+            </button>
+          </div>
+
+          <div class="pt-2 border-t border-dashed border-slate-200 flex justify-between items-center px-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Total Customers: {{ p.customers.length }}</span>
+            <span class="text-xs font-black text-slate-800">Qty {{ totalQty(p) }}</span>
+          </div>
+        </div>
+
+        <div v-else class="text-center py-2 text-[10px] font-bold text-slate-400 uppercase">
+          No customers
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useOrderStore } from '../stores/order.store';
+import { onMounted } from 'vue'
+import { usePreOrderStore } from '../stores/preOrder.store'
 
-const orderStore = useOrderStore();
-const selectedDate = ref(new Date().toISOString().substr(0, 10));
+const preOrderStore = usePreOrderStore()
 
-// Temporary Filter Logic (Assumes your order object has a 'delivery_date' field)
-const filteredPreOrders = computed(() => {
-  return orderStore.items.filter(order => {
-    return order.delivery_status === 'PRE-ORDER' && 
-           (order.delivery_date === selectedDate.value);
-  });
-});
+onMounted(() => {
+  preOrderStore.fetchPreOrders()
+})
 
-const totalItemsForDate = computed(() => {
-  return filteredPreOrders.value.reduce((acc, order) => {
-    return acc + order.items.reduce((sum, item) => sum + item.qty, 0);
-  }, 0);
-});
+function handleCardClick(p) {
+  if (p._showActions) {
+    p._showActions = false
+    return
+  }
+
+  p._expanded = !p._expanded
+
+  if (p._expanded && (!p.customers || p.customers.length === 0)) {
+    preOrderStore.fetchPreOrderDetails(p.id)
+  }
+}
+
+function toggleActions(p) {
+  if (!p._showActions) p._expanded = false
+
+  preOrderStore.items.forEach(i => {
+    if (i.id !== p.id) i._showActions = false
+  })
+
+  p._showActions = !p._showActions
+}
+
+function hasActions(p) {
+  if (p.status === 'OPEN') return true
+  if (p.status === 'FINALIZED') return true
+  return false
+}
+
+function calculateOffset(p) {
+  if (p.status === 'OPEN') return 64 * 3
+  if (p.status === 'FINALIZED') return 64
+  return 0
+}
+
+function totalQty(p) {
+  return (p.customers || []).reduce((sum, c) => sum + c.qty, 0)
+}
+
+function statusClass(status) {
+  if (status === 'OPEN') return 'bg-amber-100 text-amber-700'
+  if (status === 'FINALIZED') return 'bg-sky-100 text-sky-700'
+  return 'bg-emerald-100 text-emerald-700'
+}
+
+// STORE ACTIONS
+function edit(p) {
+  alert('Edit pre-order product (modal next)')
+}
+
+function addCustomer(p) {
+  alert('Add customer modal next')
+}
+
+function finalize(p) {
+  if (confirm('Finalize this pre-order?')) {
+    preOrderStore.finalize(p)
+  }
+}
+
+function received(p) {
+  if (confirm('Mark this pre-order as received?')) {
+    preOrderStore.received(p)
+  }
+}
+
+function removeCustomer(p, c) {
+  if (confirm('Remove this customer?')) {
+    preOrderStore.removeCustomer(p.id, c.id)
+  }
+}
 </script>
