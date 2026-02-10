@@ -2,9 +2,14 @@
   <div class="p-4 pb-24 space-y-3 bg-slate-50 min-h-screen font-sans">
     <div class="flex justify-between items-center mb-2">
       <h2 class="text-xl font-black text-slate-800 tracking-tight">Pre-Orders</h2>
-      <span class="text-[10px] bg-slate-200 px-2 py-1 rounded-lg font-bold text-slate-500 uppercase">
-        {{ preOrderStore.items.length }} Items
-      </span>
+      
+      <button
+        class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-white shadow-sm active:scale-90 transition-all"
+        @click="addProduct"
+      >
+        <span class="text-xl">+</span>
+      </button>
+
     </div>
 
     <div v-if="preOrderStore.loading" class="text-center py-20 text-slate-400">
@@ -26,7 +31,7 @@
         >
           <div class="space-y-1">
             <div class="font-black text-slate-800 leading-tight truncate w-48 text-base">
-              {{ p.product_name }}
+              {{ p.name }}
             </div>
             <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
               {{ p.sku }}
@@ -36,8 +41,11 @@
               <span class="text-[8px] uppercase tracking-tighter font-black px-2 py-1 rounded-lg" :class="statusClass(p.status)">
                 {{ p.status }}
               </span>
+              <span class="text-[8px] uppercase tracking-tighter font-black px-2 py-1 rounded-lg bg-red-200 text-slate-600">
+                📅 {{ formatDate(p.last_open_date) }}
+              </span>
               <span class="text-[8px] uppercase tracking-tighter font-black px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
-                Qty {{ totalQty(p) }}
+                Qty : {{ totalQty(p) }}
               </span>
             </div>
           </div>
@@ -102,24 +110,21 @@
         </div>
 
         <div v-else-if="p.customers && p.customers.length" class="space-y-2">
-          <div
-            v-for="c in p.customers"
-            :key="c.id"
-            class="flex justify-between items-center text-xs bg-white p-2 rounded-xl border border-slate-50 shadow-sm"
-          >
+          <div v-for="c in p.customers" :key="c.id" 
+            class="flex justify-between items-center text-xs bg-white p-2 rounded-xl border border-slate-50 shadow-sm">
             <div class="flex gap-3 items-center">
               <span class="h-6 w-6 flex items-center justify-center bg-slate-100 rounded-lg font-black text-slate-700">
                 {{ c.qty }}
               </span>
               <div class="flex flex-col">
                 <span class="font-bold text-slate-800">{{ c.name }}</span>
-                <span class="text-[10px] text-slate-400">{{ c.phone }}</span>
+                <span class="text-[10px] text-slate-400">{{ c.phone || '' }}</span>
               </div>
             </div>
 
             <button
               v-if="p.status === 'OPEN'"
-              class="text-rose-500 text-xs font-bold"
+              class="text-rose-500 text-xs font-bold active:opacity-50"
               @click="removeCustomer(p, c)"
             >
               Delete
@@ -138,13 +143,39 @@
       </div>
     </div>
   </div>
+
+  <!-- EDIT PRE-ORDER PRODUCT -->
+<EditPreOrderProduct
+  :open="showEditProduct"
+  :preOrder="activePreOrder"
+  @close="closeEditors"
+  @save="onSaved"
+/>
+
+
+<!-- EDIT / ADD CUSTOMER -->
+<EditPreOrderCustomer
+  :open="showEditCustomer"
+  :preOrder="activePreOrder"
+  @close="closeEditors"
+  @saved="onSaved"
+/>
+
+
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { usePreOrderStore } from '../stores/preOrder.store'
+import EditPreOrderProduct from '../components/EditPreOrderProduct.vue'
+import EditPreOrderCustomer from '../components/EditPreOrderCustomer.vue'
 
 const preOrderStore = usePreOrderStore()
+
+const activePreOrder = ref(null)
+
+const showEditProduct = ref(false)
+const showEditCustomer = ref(false)
 
 onMounted(() => {
   preOrderStore.fetchPreOrders()
@@ -196,12 +227,19 @@ function statusClass(status) {
 }
 
 // STORE ACTIONS
+function addProduct() {
+  activePreOrder.value = null   // explicitly new
+  showEditProduct.value = true
+}
+
 function edit(p) {
-  alert('Edit pre-order product (modal next)')
+  activePreOrder.value = p
+  showEditProduct.value = true
 }
 
 function addCustomer(p) {
-  alert('Add customer modal next')
+  activePreOrder.value = p
+  showEditCustomer.value = true
 }
 
 function finalize(p) {
@@ -220,5 +258,28 @@ function removeCustomer(p, c) {
   if (confirm('Remove this customer?')) {
     preOrderStore.removeCustomer(p.id, c.id)
   }
+}
+
+function closeEditors() {
+  showEditProduct.value = false
+  showEditCustomer.value = false
+  activePreOrder.value = null
+}
+
+function onSaved() {
+  // optional: re-fetch or trust store update
+  preOrderStore.fetchPreOrders()
+  closeEditors()
+}
+
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  }).format(date);
 }
 </script>

@@ -35,7 +35,7 @@ export const PreOrderService = {
     });
   },
 
-  delete(preorder_id) {
+  deleteProduct(preorder_id) {
     return apiPost({
       resource: "preorder",
       method: "DELETE",
@@ -44,18 +44,27 @@ export const PreOrderService = {
   },
 
   // =========================
-  // Pre-Order Customer Items
+  // Pre-Order Customers
   // =========================
 
-  addItem(data) {
+  /**
+   * payload:
+   * {
+   *   pre_order_id,
+   *   customer_name,
+   *   phone,
+   *   qty
+   * }
+   */
+  addCustomer(payload) {
     return apiPost({
       resource: "preorder",
       method: "ADD_ITEM",
-      ...data
+      ...payload
     });
   },
 
-  deleteItem(preorder_item_id) {
+  removeCustomer(preorder_item_id) {
     return apiPost({
       resource: "preorder",
       method: "DELETE_ITEM",
@@ -75,7 +84,7 @@ export const PreOrderService = {
     });
   },
 
-  receive(preorder_id) {
+  received(preorder_id) {
     return apiPost({
       resource: "preorder",
       method: "RECEIVE",

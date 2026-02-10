@@ -17,8 +17,10 @@ export const usePreOrderStore = defineStore("preOrder", {
       this.loading = true;
       try {
         const res = await PreOrderService.getAll();
+
         this.items = (res.data || []).map(p => ({
           ...p,
+          id: p.preorder_id,
           customers: p.customers || [],
           _expanded: false,
           _showActions: false
@@ -33,12 +35,22 @@ export const usePreOrderStore = defineStore("preOrder", {
       if (!preOrder) return;
 
       preOrder._loadingItems = true;
+
       try {
         const res = await PreOrderService.getById(preOrderId);
+
         if (res.data) {
-          preOrder.customers = res.data.customers || [];
+          preOrder.customers = (res.data.items || []).map(item => ({
+            id: item.preorder_item_id,
+            name: item.customer_name,
+            phone: item.phone,
+            qty: item.qty
+          }));
+
           preOrder.status = res.data.status;
         }
+      } catch (e) {
+        console.error("Fetch pre-order details failed", e);
       } finally {
         preOrder._loadingItems = false;
       }
@@ -57,16 +69,22 @@ export const usePreOrderStore = defineStore("preOrder", {
       toast.success("Pre-order product created");
     },
 
-    async addCustomer(preOrderId, customer) {
+    async addCustomer(payload) {
       const toast = useToastStore();
 
-      const preOrder = this.items.find(p => p.id === preOrderId);
-      if (!preOrder || preOrder.status !== "OPEN") return;
+      const { pre_order_id } = payload;
+      const preOrder = this.items.find(p => p.id === pre_order_id);
 
-      await PreOrderService.addCustomer(preOrderId, customer);
+      if (!preOrder || preOrder.status !== "OPEN") {
+        toast.error("Pre-order is not editable");
+        return;
+      }
 
-      // optimistic refresh (simple & safe)
-      await this.fetchPreOrders();
+      await PreOrderService.addCustomer(payload);
+
+      // safest refresh (customers + qty sync)
+      await this.fetchPreOrderDetails(pre_order_id);
+
       toast.success("Customer added");
     },
 
@@ -113,7 +131,6 @@ export const usePreOrderStore = defineStore("preOrder", {
 
       await PreOrderService.finalize(preOrder.id);
 
-      // optimistic UI
       preOrder.status = "FINALIZED";
       toast.success("Pre-order finalized");
     },
@@ -123,7 +140,6 @@ export const usePreOrderStore = defineStore("preOrder", {
 
       await PreOrderService.received(preOrder.id);
 
-      // optimistic UI
       preOrder.status = "RECEIVED";
       toast.success("Marked as received");
     }
