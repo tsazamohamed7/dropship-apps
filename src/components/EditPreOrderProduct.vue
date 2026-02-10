@@ -26,7 +26,7 @@
             v-model="form.name"
             class="w-full border border-slate-200 rounded-xl p-3
                    focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="e.g. iPhone 16 Pro"
+            placeholder="e.g. Kuih Muih"
           />
         </div>
 
@@ -124,8 +124,22 @@ watch(
     if (!isOpenSheet) return;
 
     if (props.preOrder) {
-      Object.assign(form, props.preOrder);
+      // Create a copy so we don't mutate the original prop
+      const data = { ...props.preOrder };
+
+      // Helper to convert ISO string to YYYY-MM-DD
+      const formatToInputDate = (isoString) => {
+        if (!isoString) return "";
+        return isoString.split("T")[0]; // Takes "2026-02-28" from "2026-02-28T16:00..."
+      };
+
+      // Apply formatting so the <input type="date"> can read it
+      data.last_open_date = formatToInputDate(data.last_open_date);
+      data.expected_receive_date = formatToInputDate(data.expected_receive_date);
+
+      Object.assign(form, data);
     } else {
+      // Reset form for "Add" mode
       Object.assign(form, {
         preorder_id: "",
         name: "",

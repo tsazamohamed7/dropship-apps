@@ -123,6 +123,24 @@ export const usePreOrderStore = defineStore("preOrder", {
       toast.success("Pre-order deleted");
     },
 
+    async updatePreOrder(payload) {
+      const toast = useToastStore();
+
+      try {
+        toast.info("Updating pre-order...");
+        await PreOrderService.update(payload);
+
+        // Refresh list so UI reflects latest data
+        await this.fetchPreOrders();
+
+        toast.success("Pre-order updated");
+      } catch (e) {
+        toast.error("Failed to update pre-order");
+        throw e;
+      }
+    },
+
+
     // ------------------------
     // STATUS TRANSITIONS
     // ------------------------

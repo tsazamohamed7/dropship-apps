@@ -266,9 +266,9 @@ function closeEditors() {
   activePreOrder.value = null
 }
 
-function onSaved() {
-  // optional: re-fetch or trust store update
-  preOrderStore.fetchPreOrders()
+async function onSaved(payload) {
+  // payload comes from EditPreOrderProduct
+  await preOrderStore.updatePreOrder(payload)
   closeEditors()
 }
 
