@@ -130,7 +130,8 @@ const props = defineProps({
   open: Boolean,
   preOrder: {
     type: Object,
-    required: true
+    required: false,
+    default: null
   }
 });
 
@@ -146,7 +147,7 @@ const saving = ref(false);
 const error = ref(null);
 
 // --- Editable only when OPEN
-const isEditable = computed(() => props.preOrder.status === "OPEN");
+const isEditable = computed(() => props.preOrder?.status === "OPEN");
 
 // --- Init form when preOrder changes
 watch(

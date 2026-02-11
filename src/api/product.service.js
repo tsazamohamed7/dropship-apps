@@ -15,6 +15,13 @@ export const ProductService = {
     });
   },
 
+  getSimpleList() {
+    return apiGet({
+      resource: "product",
+      method: "LIST_SIMPLE"
+    });
+  },
+
   create(data) {
     return apiPost({
       resource: "product",

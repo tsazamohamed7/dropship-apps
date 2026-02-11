@@ -19,7 +19,7 @@ export const PreOrderService = {
     });
   },
 
-  create(data) {
+  createProduct(data) {
     return apiPost({
       resource: "preorder",
       method: "POST",

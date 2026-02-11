@@ -6,6 +6,7 @@ import { useToastStore } from "./toast.store";
 export const useProductStore = defineStore("product", {
   state: () => ({
     items: [],
+    simpleItems: [],
     loading: false,
     error: null
   }),
@@ -24,6 +25,19 @@ export const useProductStore = defineStore("product", {
         this.loading = false;
       }
     },
+
+    async fetchSimpleProducts() {
+      // prevent unnecessary refetch
+      if (this.simpleItems.length) return;
+
+      try {
+        const res = await ProductService.getSimpleList();
+        this.simpleItems = res.data || [];
+      } catch (err) {
+        console.error("Failed to fetch simple products", err);
+      }
+    },
+
 
     async addProduct(data) {
       const toast = useToastStore();

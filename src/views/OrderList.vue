@@ -162,7 +162,7 @@ import { onMounted, ref, computed } from "vue";
 import { useOrderStore } from "../stores/order.store";
 
 const orderStore = useOrderStore();
-const activeTab = ref("ALL");
+const activeTab = ref("PENDING");
 
 onMounted(async () => {
   await orderStore.fetchOrders();
@@ -240,7 +240,7 @@ const tabs = computed(() => [
   { key: "ALL", label: "All", count: orderStore.items.length, badge: "bg-slate-100 text-slate-500" },
   { key: "PENDING", label: "Pending", count: orderStore.items.filter(isPending).length, badge: "bg-amber-100 text-amber-600" },
   { key: "COMPLETED", label: "Done", count: orderStore.items.filter(isCompleted).length, badge: "bg-emerald-100 text-emerald-600" },
-  { key: "CANCELLED", label: "Void", count: orderStore.items.filter(isCancelled).length, badge: "bg-red-100 text-red-600" }
+  { key: "CANCELLED", label: "Void", count: orderStore.items.filter(isCancelled).length, badge: "bg-red-100 text-red-600" },
 ]);
 
 // --- STORE ACTIONS ---

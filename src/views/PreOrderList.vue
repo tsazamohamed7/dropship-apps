@@ -146,6 +146,7 @@
 
   <!-- EDIT PRE-ORDER PRODUCT -->
 <EditPreOrderProduct
+  v-if="showEditProduct" 
   :open="showEditProduct"
   :preOrder="activePreOrder"
   @close="closeEditors"
@@ -153,8 +154,9 @@
 />
 
 
-<!-- EDIT / ADD CUSTOMER -->
+<!-- ADD CUSTOMER -->
 <EditPreOrderCustomer
+  v-if="showEditCustomer && activePreOrder" 
   :open="showEditCustomer"
   :preOrder="activePreOrder"
   @close="closeEditors"
@@ -170,16 +172,17 @@ import { usePreOrderStore } from '../stores/preOrder.store'
 import EditPreOrderProduct from '../components/EditPreOrderProduct.vue'
 import EditPreOrderCustomer from '../components/EditPreOrderCustomer.vue'
 
-const preOrderStore = usePreOrderStore()
+const preOrderStore = usePreOrderStore();
 
-const activePreOrder = ref(null)
+const activePreOrder = ref(null);
+const editing = ref(null);
 
-const showEditProduct = ref(false)
-const showEditCustomer = ref(false)
+const showEditProduct = ref(false);
+const showEditCustomer = ref(false);
 
 onMounted(() => {
   preOrderStore.fetchPreOrders()
-})
+});
 
 function handleCardClick(p) {
   if (p._showActions) {
@@ -228,28 +231,34 @@ function statusClass(status) {
 
 // STORE ACTIONS
 function addProduct() {
+  editing.value = null;
   activePreOrder.value = null   // explicitly new
   showEditProduct.value = true
 }
 
 function edit(p) {
+  editing.value = p;
+  p._showActions = false
   activePreOrder.value = p
   showEditProduct.value = true
 }
 
 function addCustomer(p) {
+  p._showActions = false
   activePreOrder.value = p
   showEditCustomer.value = true
 }
 
 function finalize(p) {
   if (confirm('Finalize this pre-order?')) {
+    p._showActions = false
     preOrderStore.finalize(p)
   }
 }
 
 function received(p) {
   if (confirm('Mark this pre-order as received?')) {
+    p._showActions = false
     preOrderStore.received(p)
   }
 }
@@ -267,9 +276,15 @@ function closeEditors() {
 }
 
 async function onSaved(payload) {
+  if (editing.value) {
+    preOrderStore.updatePreOrder(payload); 
+  } else {
+    preOrderStore.createPreOrder(payload);
+  }
+
   // payload comes from EditPreOrderProduct
-  await preOrderStore.updatePreOrder(payload)
-  closeEditors()
+  //await preOrderStore.updatePreOrder(payload)
+  closeEditors();
 }
 
 function formatDate(dateString) {

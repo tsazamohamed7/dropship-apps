@@ -17,11 +17,35 @@
 
       <!-- Form -->
       <div class="space-y-4">
-        <!-- Product Name -->
-        <div class="flex flex-col gap-1">
+
+        <!-- Product Dropdown -->
+        <div class="flex flex-col gap-2">
           <label class="text-xs font-bold text-slate-500 uppercase ml-1">
-            Product Name
+            Product
           </label>
+
+          <select
+            v-model="selectedProductId"
+            class="w-full border border-slate-200 rounded-xl p-3
+                   focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="">-- Create New Product --</option>
+            <option
+              v-for="p in productOptions"
+              :key="p.product_id"
+              :value="p.product_id"
+            >
+              {{ p.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- New Product Name (Only when not selecting existing) -->
+        <div v-if="!selectedProductId" class="flex flex-col gap-1">
+          <label class="text-xs font-bold text-slate-500 uppercase ml-1">
+            New Product Name
+          </label>
+
           <input
             v-model="form.name"
             class="w-full border border-slate-200 rounded-xl p-3
@@ -98,7 +122,19 @@
 </template>
 
 <script setup>
-import { reactive, watch, computed } from "vue";
+import { reactive, watch, computed, ref, onMounted, nextTick } from "vue";
+import { useProductStore } from "../stores/product.store";
+
+const productStore = useProductStore();
+
+const selectedProductId = ref("");
+const isInitializing = ref(false);
+
+onMounted(async () => {
+  await productStore.fetchSimpleProducts(); // only product_id + name
+});
+
+const productOptions = computed(() => productStore.simpleItems);
 
 const props = defineProps({
   open: Boolean,
@@ -109,6 +145,7 @@ const emit = defineEmits(["close", "save"]);
 
 const form = reactive({
   preorder_id: "",
+  product_id: "",
   name: "",
   sku: "",
   last_open_date: "",
@@ -118,45 +155,88 @@ const form = reactive({
 
 const isOpen = computed(() => form.status === "OPEN");
 
+
+/* ------------------------------------------
+   Watch modal open (Add / Edit mode)
+------------------------------------------ */
 watch(
   () => props.open,
-  (isOpenSheet) => {
-    if (!isOpenSheet) return;
+  (isOpen) => {
+    if (!isOpen) return;
+
+    isInitializing.value = true;
 
     if (props.preOrder) {
-      // Create a copy so we don't mutate the original prop
       const data = { ...props.preOrder };
 
-      // Helper to convert ISO string to YYYY-MM-DD
       const formatToInputDate = (isoString) => {
         if (!isoString) return "";
-        return isoString.split("T")[0]; // Takes "2026-02-28" from "2026-02-28T16:00..."
+        return isoString.split("T")[0];
       };
 
-      // Apply formatting so the <input type="date"> can read it
       data.last_open_date = formatToInputDate(data.last_open_date);
       data.expected_receive_date = formatToInputDate(data.expected_receive_date);
 
       Object.assign(form, data);
+
+      selectedProductId.value = data.product_id || "";
     } else {
-      // Reset form for "Add" mode
       Object.assign(form, {
         preorder_id: "",
+        product_id: "",
         name: "",
         sku: "",
         last_open_date: "",
         expected_receive_date: "",
         status: "OPEN"
       });
+
+      selectedProductId.value = "";
     }
-  }
+
+    nextTick(() => {
+      isInitializing.value = false;
+    });
+  },
+  { immediate: true } 
 );
+
+/* ------------------------------------------
+   Watch dropdown selection
+------------------------------------------ */
+watch(selectedProductId, (val) => {
+
+  if (isInitializing.value) return;
+
+  // ----------------------------
+  // Existing product selected
+  // ----------------------------
+  if (val) {
+    const selected = productOptions.value.find(
+      p => p.product_id === val
+    );
+
+    if (!selected) return;
+
+    form.product_id = selected.product_id;
+    form.name = selected.name;
+    form.sku = selected.sku;
+    return;
+  }
+});
+
 
 function close() {
   emit("close");
 }
 
+/* ------------------------------------------
+   Save Logic
+------------------------------------------ */
 function save() {
-  emit("save", { ...form });
+  emit("save", {
+    ...form,
+    isNewProduct: !selectedProductId.value
+  });
 }
 </script>
