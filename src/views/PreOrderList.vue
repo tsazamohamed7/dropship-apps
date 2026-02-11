@@ -144,25 +144,23 @@
     </div>
   </div>
 
-  <!-- EDIT PRE-ORDER PRODUCT -->
+<!-- EDIT PRE-ORDER PRODUCT -->
 <EditPreOrderProduct
-  v-if="showEditProduct" 
+  v-if="showEditProduct"
   :open="showEditProduct"
   :preOrder="activePreOrder"
   @close="closeEditors"
-  @save="onSaved"
+  @save="onProductSaved"
 />
-
 
 <!-- ADD CUSTOMER -->
 <EditPreOrderCustomer
-  v-if="showEditCustomer && activePreOrder" 
+  v-if="showEditCustomer && activePreOrder"
   :open="showEditCustomer"
   :preOrder="activePreOrder"
   @close="closeEditors"
-  @saved="onSaved"
+  @saved="onCustomerSaved"
 />
-
 
 </template>
 
@@ -175,7 +173,7 @@ import EditPreOrderCustomer from '../components/EditPreOrderCustomer.vue'
 const preOrderStore = usePreOrderStore();
 
 const activePreOrder = ref(null);
-const editing = ref(null);
+const editing = ref(false)
 
 const showEditProduct = ref(false);
 const showEditCustomer = ref(false);
@@ -273,19 +271,26 @@ function closeEditors() {
   showEditProduct.value = false
   showEditCustomer.value = false
   activePreOrder.value = null
+  editing.value = false
 }
 
-async function onSaved(payload) {
+
+async function onProductSaved(payload) {
   if (editing.value) {
-    preOrderStore.updatePreOrder(payload); 
+    await preOrderStore.updatePreOrder(payload)
   } else {
-    preOrderStore.createPreOrder(payload);
+    await preOrderStore.createPreOrder(payload)
   }
 
-  // payload comes from EditPreOrderProduct
-  //await preOrderStore.updatePreOrder(payload)
-  closeEditors();
+  closeEditors()
 }
+
+async function onCustomerSaved(payload) {
+  await preOrderStore.addCustomerToPreOrder(payload)
+
+  closeEditors()
+}
+
 
 function formatDate(dateString) {
   if (!dateString) return '';
