@@ -96,26 +96,33 @@ const form = reactive({
 });
 
 watch(
-  () => props.open, // Watch when the sheet opens
-  (isOpen) => {
-    if (isOpen) {
-      if (props.product) {
-        // If editing: fill with product data
-        Object.assign(form, props.product);
-      } else {
-        // If adding: clear the form
-        Object.assign(form, {
-          product_id: "",
-          name: "",
-          sku: "",
-          sell_price: 0,
-          cost_price: 0,
-          stock: 0
-        });
-      }
+  [() => props.open, () => props.product],
+  ([isOpen, product]) => {
+    if (!isOpen) return;
+
+    if (product) {
+      Object.assign(form, {
+        product_id: product.product_id || "",
+        name: product.name || "",
+        sku: product.sku || "",
+        sell_price: product.sell_price || 0,
+        cost_price: product.cost_price || 0,
+        stock: product.stock || 0
+      });
+    } else {
+      Object.assign(form, {
+        product_id: "",
+        name: "",
+        sku: "",
+        sell_price: 0,
+        cost_price: 0,
+        stock: 0
+      });
     }
-  }
+  },
+  { immediate: true }
 );
+
 
 function close() {
   emit("close");

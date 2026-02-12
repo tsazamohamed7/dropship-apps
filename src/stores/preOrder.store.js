@@ -2,6 +2,7 @@
 import { defineStore } from "pinia";
 import { PreOrderService } from "../api/preOrder.service";
 import { useToastStore } from "./toast.store";
+import { useOrderStore } from "../stores/order.store";
 
 export const usePreOrderStore = defineStore("preOrder", {
   state: () => ({
@@ -75,10 +76,10 @@ export const usePreOrderStore = defineStore("preOrder", {
       const { pre_order_id } = payload;
       const preOrder = this.items.find(p => p.id === pre_order_id);
 
-      if (!preOrder || preOrder.status !== "OPEN") {
-        toast.error("Pre-order is not editable");
-        return;
-      }
+      //if (!preOrder || preOrder.status !== "OPEN") {
+      //  toast.error("Pre-order is not editable");
+      //  return;
+      //}
 
       await PreOrderService.addCustomer(payload);
 
@@ -147,19 +148,29 @@ export const usePreOrderStore = defineStore("preOrder", {
     async finalize(preOrder) {
       const toast = useToastStore();
 
-      await PreOrderService.finalize(preOrder.id);
+      const res = await PreOrderService.finalize(preOrder.preorder_id);
 
       preOrder.status = "FINALIZED";
       toast.success("Pre-order finalized");
+
+      return res.data; // 👈 IMPORTANT
     },
 
     async received(preOrder) {
       const toast = useToastStore();
+      const orderStore = useOrderStore();
 
-      await PreOrderService.received(preOrder.id);
+      try {
+        await PreOrderService.received(preOrder.preorder_id);
 
-      preOrder.status = "RECEIVED";
-      toast.success("Marked as received");
+        // 🔥 Always refetch from backend now
+        await this.fetchPreOrders();
+        await orderStore.fetchOrders();
+
+        toast.success("Pre-order received and orders created");
+      } catch (e) {
+        toast.error(e?.message || "Failed to receive pre-order");
+      }
     }
   }
 });

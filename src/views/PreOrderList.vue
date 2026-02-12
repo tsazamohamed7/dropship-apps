@@ -162,21 +162,38 @@
   @saved="onCustomerSaved"
 />
 
+<!-- ADD PRODUCT -->
+<EditProductSheet
+  v-if="showEditProductSheet"
+  :open="showEditProductSheet"
+  :product="activeProduct"
+  @close="showEditProductSheet = false"
+  @save="saveProductFromPreOrder"
+/>
+
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import { usePreOrderStore } from '../stores/preOrder.store'
+import { useProductStore } from "../stores/product.store";
 import EditPreOrderProduct from '../components/EditPreOrderProduct.vue'
 import EditPreOrderCustomer from '../components/EditPreOrderCustomer.vue'
+import EditProductSheet from "../components/EditProductSheet.vue";
+import { useToastStore } from "../stores/toast.store";
 
 const preOrderStore = usePreOrderStore();
+const productStore = useProductStore();
+const toast = useToastStore();
 
 const activePreOrder = ref(null);
 const editing = ref(false)
 
 const showEditProduct = ref(false);
 const showEditCustomer = ref(false);
+
+const showEditProductSheet = ref(false);
+const activeProduct = ref(null);
 
 onMounted(() => {
   preOrderStore.fetchPreOrders()
@@ -247,15 +264,31 @@ function addCustomer(p) {
   showEditCustomer.value = true
 }
 
-function finalize(p) {
-  if (confirm('Finalize this pre-order?')) {
-    p._showActions = false
-    preOrderStore.finalize(p)
+async function finalize(p) {
+  if (!confirm('Finalize this pre-order?')) return;
+
+  p._showActions = false;
+
+  const result = await preOrderStore.finalize(p);
+
+  if (!result.productExists) {
+    // Open product sheet with autofill
+    activeProduct.value = {
+      product_id: result.productData.product_id,
+      name: result.productData.name,
+      sku: result.productData.sku,
+      stock: 0,
+      cost_price: 0,
+      sell_price: 0
+    };
+
+    showEditProductSheet.value = true;
   }
 }
 
+
 function received(p) {
-  if (confirm('Mark this pre-order as received?')) {
+  if (confirm('Receiving will generate customer orders automatically. Continue?')) {
     p._showActions = false
     preOrderStore.received(p)
   }
@@ -286,11 +319,16 @@ async function onProductSaved(payload) {
 }
 
 async function onCustomerSaved(payload) {
-  await preOrderStore.addCustomerToPreOrder(payload)
-
+  //await preOrderStore.addCustomer(payload)
   closeEditors()
 }
 
+async function saveProductFromPreOrder(data) {
+  await productStore.addProduct(data);
+  toast.success("Product added");
+
+  showEditProductSheet.value = false;
+}
 
 function formatDate(dateString) {
   if (!dateString) return '';
