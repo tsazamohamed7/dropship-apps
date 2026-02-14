@@ -21,7 +21,7 @@ export const usePreOrderStore = defineStore("preOrder", {
 
         this.items = (res.data || []).map(p => ({
           ...p,
-          id: p.preorder_id,
+          id: p.preorder_product_id,
           customers: p.customers || [],
           _expanded: false,
           _showActions: false
@@ -148,7 +148,7 @@ export const usePreOrderStore = defineStore("preOrder", {
     async finalize(preOrder) {
       const toast = useToastStore();
 
-      const res = await PreOrderService.finalize(preOrder.preorder_id);
+      const res = await PreOrderService.finalize(preOrder.preorder_product_id);
 
       preOrder.status = "FINALIZED";
       toast.success("Pre-order finalized");
@@ -161,7 +161,7 @@ export const usePreOrderStore = defineStore("preOrder", {
       const orderStore = useOrderStore();
 
       try {
-        await PreOrderService.received(preOrder.preorder_id);
+        await PreOrderService.received(preOrder.preorder_product_id, preOrder.product_id);
 
         // 🔥 Always refetch from backend now
         await this.fetchPreOrders();

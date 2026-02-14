@@ -76,19 +76,20 @@ export const PreOrderService = {
   // Lifecycle
   // =========================
 
-  finalize(preorder_id) {
+  finalize(preorder_product_id) {
     return apiPost({
       resource: "preorder",
       method: "FINALIZE",
-      preorder_id
+      preorder_product_id
     });
   },
 
-  received(preorder_id) {
+  received(preorder_product_id, product_id) {
     return apiPost({
       resource: "preorder",
       method: "RECEIVE",
-      preorder_id
+      preorder_product_id,
+      product_id
     });
   }
 };
