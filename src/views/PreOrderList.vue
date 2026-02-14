@@ -208,7 +208,7 @@ function handleCardClick(p) {
   p._expanded = !p._expanded
 
   if (p._expanded && (!p.customers || p.customers.length === 0)) {
-    preOrderStore.fetchPreOrderDetails(p.id)
+    preOrderStore.fetchPreOrderDetails(p.preorder_product_id)
   }
 }
 

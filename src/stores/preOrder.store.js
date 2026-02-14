@@ -32,7 +32,7 @@ export const usePreOrderStore = defineStore("preOrder", {
     },
 
     async fetchPreOrderDetails(preOrderId) {
-      const preOrder = this.items.find(p => p.id === preOrderId);
+      const preOrder = this.items.find(p => p.preorder_product_id === preOrderId);
       if (!preOrder) return;
 
       preOrder._loadingItems = true;
