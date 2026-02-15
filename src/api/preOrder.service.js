@@ -35,11 +35,11 @@ export const PreOrderService = {
     });
   },
 
-  deleteProduct(preorder_id) {
+  deleteProduct(preorder_product_id) {
     return apiPost({
       resource: "preorder",
       method: "DELETE",
-      preorder_id
+      preorder_product_id
     });
   },
 

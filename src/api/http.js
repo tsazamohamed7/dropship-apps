@@ -13,10 +13,15 @@ export async function apiGet(params) {
 export async function apiPost(body) {
   const res = await fetch(BASE_URL, {
     method: "POST",
-    //headers: {
-    //  "Content-Type": "application/json"
-    //},
     body: JSON.stringify(body)
   });
-  return res.json();
+
+  const data = await res.json();
+
+  if (!res.ok || data.code !== 200) {
+    throw data;
+  }
+
+  return data;
+  //return res.json();
 }

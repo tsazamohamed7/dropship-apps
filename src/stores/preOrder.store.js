@@ -107,22 +107,43 @@ export const usePreOrderStore = defineStore("preOrder", {
       toast.success("Customer removed");
     },
 
-    async deletePreOrder(preOrderId) {
+    async deletePreOrder(preOrderProductId) {
       const toast = useToastStore();
 
-      const preOrder = this.items.find(p => p.id === preOrderId);
+      const preOrder = this.items.find(
+        p => p.preorder_product_id === preOrderProductId
+      );
+
       if (!preOrder) return;
 
-      if (preOrder.status !== "OPEN" || preOrder.customers.length > 0) {
-        toast.error("Cannot delete this pre-order");
+      if (
+        preOrder.status !== "OPEN" ||
+        (preOrder.customers && preOrder.customers.length > 0)
+      ) {
+        toast.error("Cannot delete pre-order with customers");
         return;
       }
 
-      await PreOrderService.deleteProduct(preOrderId);
+      // --- Start of Error Handling ---
+      try {
+        // 1. Wait for the server to confirm deletion
+        await PreOrderService.deleteProduct(preOrderProductId);
 
-      this.items = this.items.filter(p => p.id !== preOrderId);
-      toast.success("Pre-order deleted");
+        // 2. Only if the line above succeeds, update the local state
+        this.items = this.items.filter(
+          p => p.preorder_product_id !== preOrderProductId
+        );
+
+        // 3. Show the success message
+        toast.success("Pre-order deleted");
+    
+      } catch (error) {
+        // 4. If the server returns 400, 500, etc., this code runs instead:
+        //console.error("Delete failed:", error);
+        toast.error(error.message || "Failed to delete, please try again!");
+      }
     },
+
 
     async updatePreOrder(payload) {
       const toast = useToastStore();

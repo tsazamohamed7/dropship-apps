@@ -72,20 +72,20 @@
 
           <button
             v-if="p.status === 'OPEN'"
-            class="w-16 bg-amber-400 text-amber-900 flex flex-col items-center justify-center gap-1"
-            @click.stop="addCustomer(p)"
-          >
-            <i class="fa fa-user-plus text-xl"></i>
-            <span class="text-[9px] font-black uppercase">Add</span>
-          </button>
-
-          <button
-            v-if="p.status === 'OPEN'"
             class="w-16 bg-slate-800 text-white flex flex-col items-center justify-center gap-1"
             @click.stop="finalize(p)"
           >
             <i class="fa fa-lock text-xl"></i>
             <span class="text-[9px] font-black uppercase">Finalize</span>
+          </button>
+
+          <button
+            v-if="p.status === 'OPEN'"
+            class="w-16 bg-red-500 text-white flex flex-col items-center justify-center gap-1"
+            @click.stop="deletePreOrderProduct(p)"
+          >
+            <i class="fa fa-trash text-xl"></i>
+            <span class="text-[9px] font-black uppercase">Delete</span>
           </button>
 
           <button
@@ -104,6 +104,15 @@
         v-if="p._expanded"
         class="bg-white/60 border-x border-b border-slate-100 rounded-b-2xl -mt-4 pt-6 p-4 space-y-3 z-10 shadow-inner"
       >
+        <button
+          v-if="p.status === 'OPEN'"
+          @click="addCustomer(p)"
+          class="w-full py-3 px-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-2"
+        >
+          <i class="fa fa-plus text-xs"></i>
+          Add Customer
+        </button>
+
         <div v-if="p._loadingItems" class="flex items-center justify-center py-4 gap-2">
           <div class="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
           <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Fetching Details</span>
@@ -216,11 +225,13 @@ function toggleActions(p) {
   if (!p._showActions) p._expanded = false
 
   preOrderStore.items.forEach(i => {
-    if (i.id !== p.id) i._showActions = false
+    if (i.preorder_product_id !== p.preorder_product_id)
+      i._showActions = false
   })
 
   p._showActions = !p._showActions
 }
+
 
 function hasActions(p) {
   if (p.status === 'OPEN') return true
@@ -257,6 +268,15 @@ function edit(p) {
   activePreOrder.value = p
   showEditProduct.value = true
 }
+
+async function deletePreOrderProduct(p) {
+  if (!confirm("Delete this pre-order product?")) return;
+
+  p._showActions = false;
+
+  await preOrderStore.deletePreOrder(p.preorder_product_id);
+}
+
 
 function addCustomer(p) {
   p._showActions = false
@@ -296,9 +316,13 @@ function received(p) {
 
 function removeCustomer(p, c) {
   if (confirm('Remove this customer?')) {
-    preOrderStore.removeCustomer(p.id, c.id)
+    preOrderStore.removeCustomer(
+      p.preorder_product_id,
+      c.id
+    )
   }
 }
+
 
 function closeEditors() {
   showEditProduct.value = false
